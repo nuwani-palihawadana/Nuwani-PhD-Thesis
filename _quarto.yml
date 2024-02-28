@@ -2,13 +2,17 @@ project:
   type: book
 
 book:
-  title: "This is my thesis"
-  author: "Susan Su"
+  title: "Optimal Predictor Selection for High-dimensional Nonparametric Forecasting"
+  author: "Nuwani Kodikara Palihawadana"
   chapters:
     - text: "Front matter"
       file: index.qmd
     - "01-chap1.qmd"
     - "02-chap2.qmd"
+    - "03-chap3.qmd"
+    - "04-chap4.qmd"
+    - "05-chap5.qmd"
+    - "06-chap6.qmd"
     - "refs.qmd"
   sidebar:
     style: "docked"
@@ -18,7 +22,7 @@ csl: american-statistical-association.csl
 degreetype: Doctor of Philosophy
 submitted: 2024
 affiliation: Department of Econometrics & Business Statistics
-degrees: 'B.Sc. (Hons), University of Tangambalanga'
+degrees: 'B.Sc. (Hons), University of Colombo, Sri Lanka'
 
 format:
   monashthesis-html: default

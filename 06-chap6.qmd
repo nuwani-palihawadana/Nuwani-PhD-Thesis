@@ -1,0 +1,3 @@
+# Conclusion {#sec-conclusion}
+
+The concluding remarks of the study will be presented in the final chapter of the thesis. The first section of the chapter will present a brief review of the overall thesis, while critically discussing the methodologies proposed and results obtained throughout the study. The next section will provide the conclusions of the study, followed by suggestions for possible future research. Finally, supplementary information regarding the reproducible material related to the thesis will also be provided.

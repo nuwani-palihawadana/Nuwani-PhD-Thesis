@@ -1,95 +1,139 @@
 # Introduction {#sec-intro}
 
-```{r}
-#| label: load_packages
-#| include: false
-library(tidyverse)
-library(tsibble)
-library(feasts)
-library(fable)
-```
+Forecasts are often contingent on a very long history of predictors. For example, when forecasting half-hourly electricity demand, it is common to use at least a week of historical half-hourly temperatures and other weather observations [@HF2010]. Similarly, when forecasting bore levels, rainfall data from up to thousand days earlier can impact the result [@Bakker2019] due to the complex flow dynamics of rainfall into aquifers.
 
-This is where you introduce the main ideas of your thesis, and an overview of the context and background.
+On the other hand, in most of these applications, the relationships between the predictors and the response variable exhibit complex nonlinear patterns. For instance, the relationship between electricity demand and temperature is often nonlinear [@HF2010; @FH2012].
 
-In a PhD, Chapter 2 would normally contain a literature review. Typically, Chapters 3--5 would contain your own contributions. Think of each of these as potential papers to be submitted to journals. Finally, Chapter 6 provides some concluding remarks, discussion, ideas for future research, and so on. Appendixes can contain additional material that don't fit into any chapters, but that you want to put on record. For example, additional tables, output, etc.
+These examples suggest a possible nonlinear "*transfer function*" model of the form $$
+ y_t = f(\bm{x}_{t}, \bm{x}_{t-1}, \dots,\bm{x}_{t-p}, y_{t-1},\dots,y_{t-k}) + \varepsilon_{t},
+$$ where $y_{t}$ is the observation of the response variable at time $t$, $\bm{x}_{t}$ is a vector of predictors at time $t$, and $\varepsilon_{t}$ is the random error. By including lagged values of $y_{t}$ along with the lagged predictors, we allow for any serial correlation in the data. However, it makes the resulting function hard to interpret. An alternative formulation is $$
+ y_t = f(\bm{x}_{t}, \bm{x}_{t-1}, \dots,\bm{x}_{t-p}) + g(\varepsilon_{t}, \varepsilon_{t-1},\dots,\varepsilon_{t-k}),
+$$ which is more difficult to estimate, but makes it simpler to interpret the effect of the predictors on the response variable.
 
-## Quarto
+When applying the transfer function model to forecast lengthy time series with complex patterns, such as half-hourly electricity demand data and groundwater level data, the form of $f$ is nonlinear, involving complicated interactions, and with a high value of $p$.
 
-In this template, the rest of the chapter shows how to use quarto. The big advantage of using quarto is that it allows you to include your R or Python code directly into your thesis, to ensure there are no errors in copying and pasting, and that everything is reproducible. It also helps you stay better organized.
+## Background {#sec-background}
 
-For details on using Quarto, see <http://quarto.org>.
+Typically, the form of $f$ involves many ad hoc model choices. It is essentially impossible to estimate a $p$-dimensional function for large $p$ due to the curse of dimensionality [@Bellman57; @Stone82]. Instead, we normally impose some form of additivity, along with some low-order interactions.
 
-## Data
+For example, @FH2012 proposed a ***semi-parametric additive model*** to obtain short-term forecasts of the half-hourly electricity demand for power systems in the Australian National Electricity Market, where $f$ is assumed to be fully additive. The main objective behind the use of this proposed semi-parametric model is to allow nonparametric components in a regression-based modelling framework with serially correlated errors [@FH2012]. In this model, several calendar effects are used as linear predictors, while the temperature effects and the lagged effects of the response are modelled using nonparametric components estimated through regression splines.
 
-Included in this template is a file called `sales.csv`. This contains quarterly data on Sales and Advertising budget for a small company over the period 1981--2005. It also contains the GDP (gross domestic product) over the same period. All series have been adjusted for inflation. We can load in this data set using the following code:
+Similarly, a ***distributed lag model*** was proposed by @Wood2017 to forecast daily death rate in Chicago using measurements of several air pollutants. In this model, the response variable is modelled via a sum of smooth functions of lagged predictor variables, which is quite similar in nature to the semi-parametric additive model used by @FH2012. However, unlike in @FH2012, @Wood2017 suggested to allow the smooth functions for lags of the same covariate to vary smoothly over lags, preventing large differences in estimated effects between adjacent lags. He proposed to use *tensor product smooths* to estimate the nonparametric functions related to these *distributed lag effects* of the predictors.
 
-```{r}
-#| label: load_data
-#| echo: true
-#| message: false
-sales <- readr::read_csv(here::here("data/sales.csv")) |>
-  rename(Quarter = `...1`) |>
-  mutate(
-    Quarter = as.Date(paste0("01-", Quarter), "%d-%b-%y"),
-    Quarter = yearquarter(Quarter)
-  ) |>
-  as_tsibble(index = Quarter)
-```
+For more examples, @Ho2020 used semi-paramteric additive models to estimate ground-level $PM_{2.5}$ concentrations in Taiwan, while nonparametric additive models were utilised by @Ibrahim2021 for predicting census survey response rates. Furthermore, @Ravindra2019 provided a comprehensive review of the applications of additive models for environmental data, with a special focus on air pollution, climate change, and human health related studies.
 
-Any data you use in your thesis can go into the `data` directory. The data should be in exactly the format you obtained it. Do no editing or manipulation of the data prior to including it in the `data` directory. Any data munging should be scripted and form part of your thesis files (possibly hidden in the output).
+## Motivation and Objectives {#sec-objectives}
 
-## Figures
+While such models have been used to address problems including electricity demand, air quality related mortality rate and groundwater level forecasting etc. [@FH2012; @HF2010; @Wood2017; @Peterson2014; @Rajaee2019], there are still a number of unresolved issues in their applications. Firstly, even though nonparametric additive models act as a remedy to the curse of dimensionality as we discussed earlier, the estimation of the model is still challenging in a high-dimensional setting due to the large number of nonparametric components to be estimated. For example, in groundwater level forecasting, thousands of possible variables (probably lagged variables) are available as predictors. In this case, including all of them in the model, which will probably result in over-fitting, will not necessarily give the best possible model in terms of forecasting accuracy. Instead, a methodology should be found to select an optimal set of predictors that would result in a parsimonious model, while generating forecasts as accurate as possible. Secondly, there is a noticeable subjectivity in the selection of predictor variables for the model, where in most of the applications of interest we discussed above, the predictor choices are mainly based on empirical explorations or domain expertise.
 
-@fig-deaths shows time plots of the data we just loaded. Notice how figure captions and references work. Chunk names can be used as figure labels with `fig-` prefixed. Never manually type figure numbers, as they can change when you add or delete figures. This way, the figure numbering is always correct.
+There are a number of previous studies that have attempted to address the issue of variable selection in nonparametric/semi-parametric additive models to some extend, using various techniques. For example, @Huang2010 used a *Least Absolute Shrinkage and Selection Operator* [LASSO, @Tibshirani1996] based procedure for variable selection in nonparametric additive models, whereas @FH2012 used a straightforward backward elimination technique to achieve selection. Moreover, @Ibrahim2021 and @Hazimeh2023 used Mixed Integer Programming based methodologies to provide a solution to the *best subset selection* problem in nonparametric additive models.
 
-```{r}
-#| label: fig-deaths
-#| fig-cap: "Quarterly sales, advertising and GDP data."
-sales |>
-  pivot_longer(Sales:GDP) |>
-  autoplot(value) +
-  facet_grid(name ~ ., scales = "free_y") +
-  theme(legend.position = "none")
-```
+In this thesis, however, we are interested in high-dimensional applications that exhibit complicated interactions among predictors (specially in the presence of large number of lagged variables), as well as correlated errors. In such a situation, *"index models"* seem to be useful for improving the flexibility of the broader class of nonparametric additive models [@Radchenko2015], while mitigating the difficulty of estimating a nonparametric component for each individual predictor. 
+ 
+To our knowledge, no previous research has been done to look at how the predictor choices can be made more objective and principled in additive index models. Hence, the **first** objective of this thesis is to bridge that gap by developing an objective and a principled methodology for optimal predictor selection in high-dimensional nonparametric additive index models. This will potentially minimise the necessity to utilise human expertise or prior knowledge in the process. Moreover, we also plan to automate the proposed variable selection methodology and the modelling framework using an open source R package, as a part of this research objective. This first objective will be addressed is **Chapter 3** of the thesis.
 
-## Results from analyses
+Furthermore, in a forecasting methodology, it will be necessary to produce prediction intervals. However, these will probably be underestimated due to the variable selection process. Therefore, the **second** objective of the thesis is to come up with a method to produce prediction intervals, while addressing the aforementioned problem of underestimation. **Chapter 4** of the thesis will focus on addressing this objective.
 
-We can fit a regression model to the sales data.
+According to @Clark2020, for Australia --- being the second driest continent on earth --- managing water resources is a challenge of significant importance. For drinking and irrigation, many parts of Australia depend on aquifers, and thus it is crucial for the relevant government authorities to have a trustworthy method to monitor groundwater levels. Hence, as the **third** objective of the thesis, we plan to apply the proposed modelling framework for groundwater level data, with the aim of estimating a model with a higher forecasting accuracy. Moreover, despite the fact that numerous conceptual, physical, statistical etc. techniques are available for groundwater level forecasting, an increased use of machine learning methods is seen in the recent past for modelling groundwater level data, due to their simplicity of use, and acceptable performance [@Rajaee2019]. Therefore, as a part of the fourth objective, we plan to compare the forecasting performance of our modelling framework to the neural network models discussed by @Clark2020. The fourth objective will form the **Chapter 5** of the thesis.
 
-```{r}
-#| echo: false
-fit <- sales |>
-  model(arima = TSLM(Sales ~ GDP + AdBudget))
-coef <- tidy(fit)
-gdp <- coef |>
-  filter(term == "GDP") |>
-  pull(estimate)
-adbudget <- coef |>
-  filter(term == "AdBudget") |>
-  pull(estimate)
-```
+The aforementioned research objectives of the thesis are summarised below.
 
-If $y_t$ denotes the sales in quarter $t$, $x_t$ denotes the corresponding advertising budget and $z_t$ denotes the GDP, then the resulting model is:
-$$
-  y_t = \beta x_t + \gamma z_t + \varepsilon_t
-$$ {#eq-drm}
-where
-$\hat{\beta} = `r sprintf("%.2f", adbudget)`$,
-and
-$\hat{\gamma} = `r sprintf("%.2f", gdp)`$.
-We can reference this equation using @eq-drm.
+**Research Objectives:**
 
-## Tables
+1.  Develop an objective and a principled methodology for optimal predictor selection in high-dimensional nonparametric additive index models with serially correlated errors, and automate the modelling framework using a comprehensive, user-friendly R package.
+2.  Produce prediction intervals, while addressing the issue of the coverage of the prediction intervals being underestimated as a result of the variable selection process.
+3.  Compare the forecasting performance of the statistical model of interest and machine learning models in application to groundwater level data, and obtain estimates of forecast uncertainty.
 
-We can also make a nice summary table of the coefficients, as shown in @tbl-coef
+<!-- ```{r} -->
+<!-- #| label: load_packages -->
+<!-- #| include: false -->
+<!-- library(tidyverse) -->
+<!-- library(tsibble) -->
+<!-- library(feasts) -->
+<!-- library(fable) -->
+<!-- ``` -->
 
-```{r}
-#| label: tbl-coef
-#| tbl-cap: "Coefficients from the fitted model."
-tidy(fit) |>
-  select(term, estimate, p.value) |>
-  rename(Coefficient = term, Estimate = estimate, `P value` = p.value) |>
-  knitr::kable(booktabs = TRUE, digits = 2)
-```
+<!-- This is where you introduce the main ideas of your thesis, and an overview of the context and background. -->
 
-Again, notice the use of labels and references to automatically generate table numbers.
+<!-- In a PhD, Chapter 2 would normally contain a literature review. Typically, Chapters 3--5 would contain your own contributions. Think of each of these as potential papers to be submitted to journals. Finally, Chapter 6 provides some concluding remarks, discussion, ideas for future research, and so on. Appendixes can contain additional material that don't fit into any chapters, but that you want to put on record. For example, additional tables, output, etc. -->
+
+<!-- ## Quarto -->
+
+<!-- In this template, the rest of the chapter shows how to use quarto. The big advantage of using quarto is that it allows you to include your R or Python code directly into your thesis, to ensure there are no errors in copying and pasting, and that everything is reproducible. It also helps you stay better organized. -->
+
+<!-- For details on using Quarto, see <http://quarto.org>. -->
+
+<!-- ## Data -->
+
+<!-- Included in this template is a file called `sales.csv`. This contains quarterly data on Sales and Advertising budget for a small company over the period 1981--2005. It also contains the GDP (gross domestic product) over the same period. All series have been adjusted for inflation. We can load in this data set using the following code: -->
+
+<!-- ```{r} -->
+<!-- #| label: load_data -->
+<!-- #| echo: true -->
+<!-- #| message: false -->
+<!-- sales <- readr::read_csv(here::here("data/sales.csv")) |> -->
+<!--   rename(Quarter = `...1`) |> -->
+<!--   mutate( -->
+<!--     Quarter = as.Date(paste0("01-", Quarter), "%d-%b-%y"), -->
+<!--     Quarter = yearquarter(Quarter) -->
+<!--   ) |> -->
+<!--   as_tsibble(index = Quarter) -->
+<!-- ``` -->
+
+<!-- Any data you use in your thesis can go into the `data` directory. The data should be in exactly the format you obtained it. Do no editing or manipulation of the data prior to including it in the `data` directory. Any data munging should be scripted and form part of your thesis files (possibly hidden in the output). -->
+
+<!-- ## Figures -->
+
+<!-- @fig-deaths shows time plots of the data we just loaded. Notice how figure captions and references work. Chunk names can be used as figure labels with `fig-` prefixed. Never manually type figure numbers, as they can change when you add or delete figures. This way, the figure numbering is always correct. -->
+
+<!-- ```{r} -->
+<!-- #| label: fig-deaths -->
+<!-- #| fig-cap: "Quarterly sales, advertising and GDP data." -->
+<!-- sales |> -->
+<!--   pivot_longer(Sales:GDP) |> -->
+<!--   autoplot(value) + -->
+<!--   facet_grid(name ~ ., scales = "free_y") + -->
+<!--   theme(legend.position = "none") -->
+<!-- ``` -->
+
+<!-- ## Results from analyses -->
+
+<!-- We can fit a regression model to the sales data. -->
+
+<!-- ```{r} -->
+<!-- #| echo: false -->
+<!-- fit <- sales |> -->
+<!--   model(arima = TSLM(Sales ~ GDP + AdBudget)) -->
+<!-- coef <- tidy(fit) -->
+<!-- gdp <- coef |> -->
+<!--   filter(term == "GDP") |> -->
+<!--   pull(estimate) -->
+<!-- adbudget <- coef |> -->
+<!--   filter(term == "AdBudget") |> -->
+<!--   pull(estimate) -->
+<!-- ``` -->
+
+<!-- If $y_t$ denotes the sales in quarter $t$, $x_t$ denotes the corresponding advertising budget and $z_t$ denotes the GDP, then the resulting model is: -->
+<!-- $$ -->
+<!--   y_t = \beta x_t + \gamma z_t + \varepsilon_t -->
+<!-- $$ {#eq-drm} -->
+<!-- where -->
+<!-- $\hat{\beta} = `r sprintf("%.2f", adbudget)`$, -->
+<!-- and -->
+<!-- $\hat{\gamma} = `r sprintf("%.2f", gdp)`$. -->
+<!-- We can reference this equation using @eq-drm. -->
+
+<!-- ## Tables -->
+
+<!-- We can also make a nice summary table of the coefficients, as shown in @tbl-coef -->
+
+<!-- ```{r} -->
+<!-- #| label: tbl-coef -->
+<!-- #| tbl-cap: "Coefficients from the fitted model." -->
+<!-- tidy(fit) |> -->
+<!--   select(term, estimate, p.value) |> -->
+<!--   rename(Coefficient = term, Estimate = estimate, `P value` = p.value) |> -->
+<!--   knitr::kable(booktabs = TRUE, digits = 2) -->
+<!-- ``` -->
+
+<!-- Again, notice the use of labels and references to automatically generate table numbers. -->

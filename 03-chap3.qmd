@@ -1,0 +1,2 @@
+# Sparse Multiple Index Models for High-dimensional Nonparametric Forecasting {#sec-SMImodel}
+
