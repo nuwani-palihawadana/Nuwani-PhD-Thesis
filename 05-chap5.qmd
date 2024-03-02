@@ -1,4 +1,4 @@
-# Sparse Nonparametric Models Towards Accurate Forecasting: An Application to Groundwater Level Data {#sec-GW}
+# Sparse Nonparametric Models Towards Improved Forecasts: An Application to Groundwater Level Data {#sec-GW}
 
 We plan to apply the proposed variable selection methodology and modelling framework to forecast groundwater levels using data from the Australian Groundwater Explorer[^1], which is the fourth objective of the thesis.
 
