@@ -4,9 +4,11 @@ Forecasts are often contingent on a very long history of predictors. For example
 
 On the other hand, in most of these applications, the relationships between the predictors and the response variable exhibit complex nonlinear patterns. For instance, the relationship between electricity demand and temperature is often nonlinear [@HF2010; @FH2012].
 
-These examples suggest a possible nonlinear "*transfer function*" model of the form $$
- y_t = f(\bm{x}_{t}, \bm{x}_{t-1}, \dots,\bm{x}_{t-p}, y_{t-1},\dots,y_{t-k}) + \varepsilon_{t},
-$$ where $y_{t}$ is the observation of the response variable at time $t$, $\bm{x}_{t}$ is a vector of predictors at time $t$, and $\varepsilon_{t}$ is the random error. By including lagged values of $y_{t}$ along with the lagged predictors, we allow for any serial correlation in the data. However, it makes the resulting function hard to interpret. An alternative formulation is $$
+These examples suggest a possible nonlinear "*transfer function*" model of the form 
+$$
+ y_{t} = f(\bm{x}_{t}, \bm{x}_{t-1}, \dots, \bm{x}_{t-p}, y_{t-1}, \dots, y_{t-k}) + \varepsilon_{t},
+$$ 
+where $y_{t}$ is the observation of the response variable at time $t$, $\bm{x}_{t}$ is a vector of predictors at time $t$, and $\varepsilon_{t}$ is the random error. By including lagged values of $y_{t}$ along with the lagged predictors, we allow for any serial correlation in the data. However, it makes the resulting function hard to interpret. An alternative formulation is $$
  y_t = f(\bm{x}_{t}, \bm{x}_{t-1}, \dots,\bm{x}_{t-p}) + g(\varepsilon_{t}, \varepsilon_{t-1},\dots,\varepsilon_{t-k}),
 $$ which is more difficult to estimate, but makes it simpler to interpret the effect of the predictors on the response variable.
 
