@@ -1,1 +1,2 @@
-# Estimating Uncertainty in High-dimensional Nonparametric Forecasts: A Prediction Interval Approach {#sec-PI}
+# Sparse Nonparametric Models Towards Improved Forecasts: An Application to Electricity Demand Forecasting {#sec-Elec}
+

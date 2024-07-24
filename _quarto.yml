@@ -12,7 +12,6 @@ book:
     - "03-chap3.qmd"
     - "04-chap4.qmd"
     - "05-chap5.qmd"
-    - "06-chap6.qmd"
     - "refs.qmd"
   sidebar:
     style: "docked"
@@ -20,7 +19,7 @@ book:
 bibliography: thesisrefs.bib
 csl: american-statistical-association.csl
 degreetype: Doctor of Philosophy
-submitted: 2024
+submitted: 2025
 affiliation: Department of Econometrics & Business Statistics
 degrees: 'B.Sc. (Hons), University of Colombo, Sri Lanka'
 
