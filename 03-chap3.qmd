@@ -1,1 +1,207 @@
-# Estimating Uncertainty in High-dimensional Nonparametric Forecasts: A Prediction Interval Approach {#sec-PI}
+# Uncertainty Estimates for High-dimensional Nonparametric Forecasts: A Prediction Interval Approach {#sec-PI}
+
+
+```{r}
+#| label: load_packages
+#| include: false
+# Load all required packages
+library(tsibble)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(knitr)
+library(kableExtra)
+options(knitr.kable.NA = '')
+```
+
+Have to write a preamble. (Abstract of the paper)
+
+## Introduction {#sec-introduction2}
+
+Provide an introduction to the problem. Discuss motivation and objectives of the paper.
+
+You need to find literature.
+
+## Background {#sec-background2}
+
+Describe the methodologies used for constructing prediction intervals. Describe time series cross-validation. 
+
+### Block Bootstrap {#sec-bootstrap2}
+
+### Conformal Prediction {#sec-conformal2}
+
+#### Split Conformal Prediction
+
+#### Weighted Split Conformal Prediction
+
+#### Adaptive Conformal Prediction
+
+#### Conformal PID Control
+
+#### Multistep-ahead Conformal Prediction
+
+### Time Series Cross-validation {#sec-tscv2}
+
+\newpage
+
+## Methodology {#sec-methodology2}
+
+### Preliminaries {#sec-notation2}
+
+Let $y$ denote the time series $y_{1}, \dots, y_{T}$, and let our forecasting model be of the form
+$$
+ y_t = f(\bm{x}_{t}, \bm{x}_{t-1}, \dots,\bm{x}_{t-p}, y_{t-1},\dots,y_{t-k}) + \varepsilon_{t},
+$$ {#eq-modelform}
+where $y_{t}$ is the observed value of the response variable at time $t$, $f$ is any arbitrary function, $\bm{x}_{t}$ is a vector of predictors at time $t$, and $\varepsilon_{t}$ is an i.i.d. random error. Notice that several lagged values of $y_{t}$ along with the lagged predictors are included in the model to capture any serial correlation present in the data. We also define $z_{t} = (y_{t}, \bm{x}_{t})$, to be the observation at time $t$. 
+
+We sequentially split the data into non-overlapping training set ($z_{1}, \dots, z_{tr}$), calibration set ($z_{tr + 1}, \dots, z_{tc}$), and test set ($z_{tc + 1}, \dots, z_{T}$), and estimate the forecasting model (@eq-modelform) using the training set. Let the estimated model be
+$$
+  \hat{y}_{t} = f_{est}(\bm{x}_{t}, \bm{x}_{t-1}, \dots,\bm{x}_{t-p}, y_{t-1},\dots,y_{t-k}) + e_{t},
+$$ {#eq-estmodel}
+where $\hat{y}_{t}$ is the forecast for $y_{t}$ obtained through the estimated model, $f_{est}$ is the estimated forecasting function, and $e_{t} = y_{t} - \hat{y}_{t}$ is the model residual at time $t$. 
+
+### Prediction Intervals through Block Bootstrapping {#sec-bootflow2}
+
+Here we use the standard *block bootstrap* introduced in @sec-bootstrap2 for re-sampling residuals.
+
+Once the forecasting model is estimated (@eq-estmodel), we obtain the series of *in-sample* residuals $e_{1}, \dots, e_{tr}$. Then we randomly re-sample segments/blocks of residuals, and join them together to construct new simulated residual series. If the residual series is a non-seasonal time series, we use the Autocorrelation Function (ACF) to determine the size of a block. For example, if the $i^{th}$ lag of ACF is significant, we take the block size to be $i$, as this will ensure that we capture any important autocorrelation structures in the series. If the residual series is seasonal, we consider *single season block bootstrap* [@HF2010; @politis (missing reference)], where the length of each block is taken to be a multiple of the length of the seasonal period of the series. 
+
+To test the coverage of the derived prediction intervals, we calculate the average coverage of multiple prediction intervals constructed over a time series cross-validation forecasting procedure as proposed by @Wang2024 (cite paper by Xiaoqian and Rob later). 
+
+The complete workflow undertaken for obtaining prediction intervals through block bootstrapping for the test set is as follows.
+
+#### Block Bootstrapping with Time Series Cross-validation Forecasting
+
+First, we sequentially split the data into non-overlapping training set ($z_{1}, \dots, z_{tr}$), calibration set ($z_{tr + 1}, \dots, z_{tc}$), and test set ($z_{tc + 1}, \dots, z_{T}$). 
+
+Secondly, we use cross-validation forecasting. We start by estimating our forecasting model on the training set, and then iteratively roll the training window forward by one observation, while repeating the model estimation until we reach the time point $tc - H + 1$, where $H$ is the forecasting horizon of interest. Next, we calculate multistep-ahed forecast errors $e_{t+h|t}$ for $h = 1, \dots, H$ on rolling calibration sets. 
+
+
+
+
+Secondly, we use cross-validation forecasting as in previous methods. We start by estimating our forecasting model on the training set, and then iteratively rolling the training window forward by one observation, while repeating the model estimation until we reach the time point $tc - H + 1$, where $H$ is the forecasting horizon of interest. Next, we calculate multistep-ahed forecast errors $e_{t+h|t}$ for $h = 1, \dots, H$ on rolling calibration sets. 
+
+Once multistep-ahed forecast errors are obtained, we treat the forecasting errors 
+$e_{t+1|t}, \dots, e_{t+H|t}$ at each time point $t$ as blocks, and perform block bootstrapping. 
+
+Finally, we use the latest updates model to generate forecasts, while adding bootstrapped multstep-ahead forecast errors iteratively, generating several future
+sample paths resulting in distributional forecasts.
+
+
+### Prediction Intervals through Conformal Prediction {#sec-cpflow2}
+
+## Conformal Block Bootstrap {#sec-cpBootstrap2}
+
+Block bootstrapping involves re-sampling blocks of *"in‑sample"* residuals to simulate future sample paths for constructing prediction intervals. While re-sampling blocks of residuals, instead of individual residuals, allow us to effectively capture the autocorrelation in time series data, the use of in-sample residuals hinder the ability to account for the uncertainty introduced by forecasting predictors in ex-ante forecasting. 
+
+In contrast, classical split conformal prediction (SCP) involves splitting the data into training, calibration and test sets, where the forecasting model is trained on the training set, and nonconformity scores are obtained on the calibration (*"out-of-sample"*) set, which are in turn used to derive prediction intervals for the test set. This use of out-of-sample nonconformity scores (or errors) allow us to capture the uncertainty that results in ex-ante forecasting, assuming future forecast errors for both the forecast variable and the predictors are similar to past errors. However, accounting for the autocorrelation in the data will be problematic in conformal prediction. 
+
+Therefore, we propose ***Conformal Block Bootstrapping***, which is a natural combination of the aforementioned methods. The proposed method allows us to account for both the temporal correlation in the data and the uncertainty brought into the process by ex-ante forecasting, exploiting the strengths of both block bootstrapping and split conformal prediction. The workflow of the proposed method is as follows.
+
+### Conformal Block Bootstrapping with Time Series Cross-validation Forecasting
+
+First, we sequentially split the data into non-overlapping training set ($z_{1}, \dots, z_{tr}$), calibration set ($z_{tr + 1}, \dots, z_{tc}$), and test set ($z_{tc + 1}, \dots, z_{T}$). 
+
+Secondly, we use cross-validation forecasting as in previous methods. We start by estimating our forecasting model on the training set, and then iteratively roll the training window forward by one observation, while repeating the model estimation until we reach the time point $tc - H + 1$, where $H$ is the forecasting horizon of interest. Next, we calculate multistep-ahed forecast errors $e_{t+h|t}$ for $h = 1, \dots, H$ on rolling calibration sets. 
+
+Once multistep-ahed forecast errors are obtained, we treat the forecasting errors 
+$e_{t+1|t}, \dots, e_{t+H|t}$ at each time point $t$ as blocks, and perform block bootstrapping. 
+
+Finally, we use the latest updates model to generate forecasts, while adding bootstrapped multstep-ahead forecast errors iteratively, generating several future
+sample paths resulting in distributional forecasts.
+
+## Simulation Experiment {#sec-simulation2}
+
+## Empirical Applications {#sec-applications2}
+
+### Forecasting Daily Mortality {#sec-mortality2}
+
+Studying the effects of various environmental exposures such as weather related variables, pollutants and man-made environmental conditions on human health, is of major concern in environmental epidemiology. Here, we consider forecasting daily mortality based on heat exposure, using a data set obtained from @Masselot2022. 
+
+#### Description of the Data
+
+For this analysis, we consider daily mortality and heat exposure data for the Metropolitan Area of Montreal, Québec, Canada, from 1990 to 2014, for the months June, July, and August (i.e. summer). The daily all-cause mortality data were obtained from the National Institute of Public Health, Québec, while *DayMet*, a 1 km × 1 km grid data set [@Thornton2021], was used to extract daily temperature and humidity data [@Masselot2022].
+
+#### Nonparametric Forecasting Model
+
+##### Predictors Considered: 
+
+The three main predictors considered in this empirical study are maximum temperature, minimum temperature, and vapour pressure (to represent the level of humidity). In addition to current maximum and minimum temperatures, the temperature measurements up to 14 days prior are considered as predictors in the forecasting model. This accounts for the cumulative impact of both current and recent past temperatures on a person's heat exposure. Similarly, the current value and 14 lags of vapour pressure are considered as predictors, as a proxy for the level of humidity. Finally, a couple of calendar variables (*day of the season (DOS)* and *Year*) are incorporated into the model to capture annual trend and seasonality, and also to control the autocorrelation in residuals. 
+
+##### Sparse Multiple Index (SMI) Model:
+
+We used SMI Model [@Palihawadana2024] as the nonparametric forecasting model to obtain point forecasts on a test set. Maximum temperature lags, minimum temperature lags, and vapour pressure lags are predictors that may enter indices. The two calendar variables, *DOS* and *Year*, are included in the model as separate nonparametric components that do not enter any of the indices. Hence, the relevant SMI Model can be written as
+$$
+  \textbf{Deaths} = \beta_{0} + \sum_{j = 1}^{p}{g_{j}(\bm{X}\bm{\alpha}_{j})} + f_{1}(\textbf{DOS}) + f_{2}(\textbf{Year})+ \bm{\varepsilon},
+$$ {#eq-heat}
+where
+
+- $\textbf{Deaths}$ is the vector containing daily deaths observations;
+- $\beta_{0}$ is the model intercept;
+- $p$ is the unknown number of indices to be estimated via the algorithm;
+- $\bm{X}$ is a matrix containing the $q=45$ predictor variables that may enter indices (i.e. maximum temperature lags, minimum temperature lags, and vapour pressure lags);
+- $\bm{\alpha}_{j}$, $j = 1, \dots, p$ are the index coefficient vectors, each of length $q$;
+- $g_{1}, \dots,g_p$, $f_{1}$, and $f_{2}$ are unknown nonparametric functions; and
+- $\bm{\varepsilon}$ is the error term.
+
+The data from 1990 to 2012 are used as the training set to estimate the model, while the data of year 2014 are used as the test set for evaluating forecasting performance. The data from the three summer months of year 2013 are kept aside as a validation set, which is used to estimate benchmark models for comparison purposes.
+
+We estimated SMI Models for the mortality data using three different initialisation options: "PPR", "Additive" and "Linear", and observed that the SMI Model estimated with "PPR" initialisation, ***SMI Model (12, 0) - PPR ***, shows the best forecasting performance on the test set, compared to the other two estimated SMI models [@Palihawadana2024].
+
+#### Interval Forecasts
+
+##### Block Bootstrapping:
+
+First, the single season block bootstrapping method was used to construct prediction intervals on the test set, with a confidence (nominal coverage) of 80%. The block size was taken as 3, since the third lag of the Autocorrelation Function (ACF) plot of the in-sample residuals of the fitted ***SMI Model (12, 0) - PPR *** was significant. 
+
+##### Conformal Prediction:
+
+### Forecasting Daily Solar Intensity {#sec-solar2}
+
+Next, we forecast daily solar intensity, using other weather conditions.
+
+#### Description of the Data
+
+We use solar intensity and other weather variables measured at the Davis weather station in Amherst, Massachusetts, obtained from the *UMass Trace Repository* [@Umass2023]. The data was recorded at every five minutes, from 24 February 2006 to 27 February 2013, using sensors for measuring temperature, wind chill, humidity, dew point, wind speed, wind direction, rain, pressure, solar intensity, and UV. We converted the five minutes data to daily data by averaging each variable.
+
+#### Nonparametric Forecasting Model
+
+##### Predictors Considered: 
+
+Three lags of the daily solar intensity itself are used as predictors to incorporate the serial correlations presented in the data into the modelling process. Other weather variables temperature, dew point, wind, rain and humidity are also considered as predictors into the model. In addition to current temperature, dew point, wind speed, rain and humidity, the measurements of the three previous days for each of the these weather variables are also included as predictors in the forecasting model. Finally, a calendar variable, *day of the year (DOY)* is incorporated into the model as a smooth function through fourier terms to capture annual seasonality, and control for autocorrelation in residuals. 
+
+##### Sparse Multiple Index (SMI) Model:
+
+We again used the SMI Model as the nonparametric forecasting model to obtain point forecasts. The lags of solar intensity, and the lags of weather variables are considered as predictors that may enter indices. The fourier terms capturing the day of the year effect are included into the model as linear variables (so that they are not part of the indices).
+
+We experimented with the number of pairs of fourier terms that best captures the day of the year effect, where we considered the values $K$ (pairs) $= 1$ to $K = 10$. The SMI Models fitted with $K = 1$ fourier terms resulted in the lowest test MSE. (i.e. the day of the year effect follows a simple sine wave.)
+
+Hence, the relevant SMI Model can be written as
+$$
+  \textbf{Solar} = \beta_{0} + \sum_{j = 1}^{p}{g_{j}(\bm{X}\bm{\alpha}_{j})} + \theta_{1}\textbf{DOY}\_\textbf{S1} + \theta_{2}\textbf{DOY}\_\textbf{C1} + \bm{\varepsilon},
+$$ {#eq-solar}
+where
+
+- $\textbf{Solar}$ is the vector containing daily observations of solar intensity;
+- $\beta_{0}$ is the model intercept;
+- $p$ is the unknown number of indices to be estimated via the algorithm;
+- $\bm{X}$ is a matrix containing the $q=23$ predictor variables that may enter indices (i.e. solar intensity, temperature, dew point, wind speed, rain and humidity lags);
+- $\bm{\alpha}_{j}$, $j = 1, \dots, p$ are the index coefficient vectors, each of length $q$;
+- $g_{1}, \dots, g_{p}$ are unknown nonparametric functions;
+- $\textbf{DOY}\_\textbf{S1}$ and $\textbf{DOY}\_\textbf{C1}$ are the sine and cosine terms of the first pair of fourier terms corresponding to the variable $\textbf{DOY}$ respectively (seasonal period = 365.25);
+- $\theta_{1}$ and $\theta_{2}$ are the coefficients of $\textbf{DOY}\_\textbf{S1}$ and $\textbf{DOY}\_\textbf{C1}$ respectively; and
+- $\bm{\varepsilon}$ is the error term.
+
+The data from February 2006 to October 2012 are used as the training set to estimate the model, while the data of January and February 2013 comprise the test set to evaluate the forecasting performance.
+
+We estimated SMI Models for the solar intensity data using three different initialisation options: "PPR", "Additive" and "Linear", and observed that the SMI Model estimated with "Additive" initialisation, ***SMI Model (1, 0) - Additive***, shows the best forecasting performance among the three estimated SMI Models [@Palihawadana2024].
+
+#### Interval Forecasts
+
+##### Block Bootstrapping:
+
+First, the single season block bootstrapping method, with recursive forecasting was used to construct prediction intervals on the test set, with a confidence (nominal coverage) of 80%. The ACF plot of the in-sample residuals of the fitted ***SMI Model (1, 0) - Additive*** contained many significant lags. However, a comparatively larger autocorrelation was observed at lag 7, and hence the block size was chosen to be 7. 
+
+##### Conformal Prediction:
+
+## Conclusions {#sec-conclusions2}

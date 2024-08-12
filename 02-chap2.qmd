@@ -574,7 +574,7 @@ The penalty parameter combination $(\lambda_{0} = 1, \lambda_{2} = 0)$ was selec
 #| tbl-cap: "Out-of-sample point forecast results for daily solar intensity. The columns *Model*, *Predictors* and *Indices* indicate the name of the fitted model, number of predictor variables used/selected (if predictor selection is performed), and the number of indices estimated by the fitted model, respectively."
 results_solar <- readr::read_csv("data/solar_results_fourier8.csv")
 kable(results_solar,
-  format = "latex",
+  #format = "latex",
   booktabs = TRUE,
   digits = 3,
   linesep = "",
