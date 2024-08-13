@@ -1,4 +1,4 @@
-# Uncertainty Estimates for High-dimensional Nonparametric Forecasts: A Prediction Interval Approach {#sec-PI}
+# Estimating Uncertainty of High-dimensional Nonparametric Forecasts: A Prediction Interval Approach {#sec-PI}
 
 
 ```{r}
@@ -26,21 +26,21 @@ You need to find literature.
 
 Describe the methodologies used for constructing prediction intervals. Describe time series cross-validation. 
 
+### Time Series Cross-validation {#sec-tscv2}
+
 ### Block Bootstrap {#sec-bootstrap2}
 
 ### Conformal Prediction {#sec-conformal2}
 
-#### Split Conformal Prediction
+#### Classical Split Conformal Prediction (SCP)
 
-#### Weighted Split Conformal Prediction
+#### Weighted Split Conformal Prediction (WSCP)
 
-#### Adaptive Conformal Prediction
+#### Adaptive Conformal Prediction (ACP)
 
-#### Conformal PID Control
+#### Conformal PID Control (PID)
 
-#### Multistep-ahead Conformal Prediction
-
-### Time Series Cross-validation {#sec-tscv2}
+#### Multistep-ahead Conformal Prediction (MCP)
 
 \newpage
 
@@ -91,16 +91,27 @@ The complete workflow undertaken for obtaining prediction intervals through bloc
 
 6. Calculate required quantiles of the sets of simulated future values at each forecast horizon to construct prediction intervals of desired nominal coverage. 
 
-
 ### Prediction Intervals through Conformal Prediction {#sec-cpflow2}
+
+Here we use the conformal prediction methods for computing prediction intervals with time series cross-validation forecasting proposed by @Wang2024 (cite paper by Xiaoqian and Rob later). The workflow can be summarised as follows.
+
+#### Conformal Prediction with Time Series Cross-validation Forecasting
+
+1. Sequentially split the data into non-overlapping training set ($z_{1}, \dots, z_{tr}$), calibration set ($z_{tr + 1}, \dots, z_{tc}$), and test set ($z_{tc + 1}, \dots, z_{T}$) as in block bootstrapping. 
+
+2. Perform cross-validation forecasting. Start by estimating the forecasting model on the training set, and then iteratively roll the training window forward by one observation, while repeating the model estimation until we reach the time point $tc - H + 1$, where $H$ is the forecasting horizon of interest. 
+
+3. Calculate multi-step-ahead forecasts and non-conformity scores $s_{t+h|t}$ for $h = 1, \dots, H$ (non-conformity scores) on rolling calibration sets. 
+
+4. Apply the different conformal prediction methods: SCP, WSCP, ACP, PID and MCP, to compute prediction intervals for the test set, using the point forecasts and non-conformity scores obtained in step 3. 
 
 ## Conformal Block Bootstrap {#sec-cpBootstrap2}
 
-Block bootstrapping involves re-sampling blocks of *"in‑sample"* residuals to simulate future sample paths for constructing prediction intervals. While re-sampling blocks of residuals, instead of individual residuals, allow us to effectively capture the autocorrelation in time series data, the use of in-sample residuals hinder the ability to account for the uncertainty introduced by forecasting predictors in ex-ante forecasting. 
+Block bootstrapping involves re-sampling blocks of *"in‑sample"* residuals to simulate future sample paths. Re-sampling blocks of residuals instead of individual residuals, allow us to effectively capture the autocorrelation in time series data. However, the use of in-sample residuals hinder the ability to account for the uncertainty introduced by forecasting predictors in ex-ante forecasting. 
 
 In contrast, classical split conformal prediction (SCP) involves splitting the data into training, calibration and test sets, where the forecasting model is trained on the training set, and nonconformity scores are obtained on the calibration (*"out-of-sample"*) set, which are in turn used to derive prediction intervals for the test set. This use of out-of-sample nonconformity scores (or errors) allow us to capture the uncertainty that results in ex-ante forecasting, assuming future forecast errors for both the forecast variable and the predictors are similar to past errors. However, accounting for the autocorrelation in the data will be problematic in conformal prediction. 
 
-Therefore, we propose ***Conformal Block Bootstrapping***, which is a natural combination of the two preceding methods. The proposed method allows us to account for both the temporal correlation in the data and the uncertainty brought into the process by ex-ante forecasting, exploiting the strengths of both block bootstrapping and split conformal prediction. The workflow of the proposed method is as follows.
+Therefore, we propose ***Conformal Block Bootstrapping***, which is a natural combination of the two preceding methods. The proposed method allows us to account for both the temporal correlation in the data, and the uncertainty brought into the process by ex-ante forecasting, exploiting the strengths of both block bootstrapping and split conformal prediction. The workflow of the proposed method is as follows.
 
 #### Conformal Block Bootstrapping with Time Series Cross-validation Forecasting
 
