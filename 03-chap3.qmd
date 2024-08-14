@@ -52,27 +52,27 @@ Let $y$ denote the time series $y_{1}, \dots, y_{T}$, and let our forecasting mo
 $$
  y_t = f(\bm{x}_{t}, \bm{x}_{t-1}, \dots,\bm{x}_{t-p}, y_{t-1},\dots,y_{t-k}) + \varepsilon_{t},
 $$ {#eq-modelform}
-where $y_{t}$ is the observed value of the response variable at time $t$, $f$ is any arbitrary function, $\bm{x}_{t}$ is a vector of predictors at time $t$, and $\varepsilon_{t}$ is an i.i.d. random error. Notice that several lagged values of $y_{t}$ along with the lagged predictors are included in the model to capture any serial correlation present in the data. We also define $z_{t} = (y_{t}, \bm{x}_{t})$, to be the observation at time $t$. 
+where $y_{t}$ is the observed value of the response variable at time $t$, $f$ is any arbitrary function, $\bm{x}_{t}$ is a vector of predictors at time $t$, and $\varepsilon_{t}$ is an i.i.d. random error. Notice that several lagged values of $y_{t}$ along with the lagged predictors are included in the model to capture any serial correlation present in the data. We also define $\bm{z}_{t} = (y_{t}, \bm{x}_{t})$, to be the observation at time $t$. 
 
-We sequentially split the data into non-overlapping training set ($z_{1}, \dots, z_{tr}$), calibration set ($z_{tr + 1}, \dots, z_{tc}$), and test set ($z_{tc + 1}, \dots, z_{T}$), and estimate the forecasting model (@eq-modelform) using the training set. Let the estimated model be
+We sequentially split the data into non-overlapping training set $\{\bm{z}_{1}, \dots, \bm{z}_{tr}\}$, calibration set $\{\bm{z}_{tr + 1}, \dots, \bm{z}_{tc}\}$, and test set $\{\bm{z}_{tc + 1}, \dots, \bm{z}_{T}\}$, and estimate the forecasting model (@eq-modelform) using the training set. Let the estimated model be
 $$
-  \hat{y}_{t} = f_{est}(\bm{x}_{t}, \bm{x}_{t-1}, \dots,\bm{x}_{t-p}, y_{t-1},\dots,y_{t-k}) + e_{t},
+  \hat{y}_{t} = \hat{f}(\bm{x}_{t}, \bm{x}_{t-1}, \dots,\bm{x}_{t-p}, y_{t-1},\dots,y_{t-k}),
 $$ {#eq-estmodel}
-where $\hat{y}_{t}$ is the forecast for $y_{t}$ obtained through the estimated model, $f_{est}$ is the estimated forecasting function, and $e_{t} = y_{t} - \hat{y}_{t}$ is the model residual at time $t$. 
+where $\hat{y}_{t}$ is the forecast for $y_{t}$ obtained through the estimated model, $\hat{f}$ is the estimated forecasting function. Then the model residuals are given by $e_{t} = y_{t} - \hat{y}_{t}$.
 
 ### Prediction Intervals through Block Bootstrapping {#sec-bootflow2}
 
 Here we use the standard *block bootstrap* introduced in @sec-bootstrap2 for re-sampling residuals.
 
-Once the forecasting model is estimated (@eq-estmodel), we obtain the series of *in-sample* residuals $e_{1}, \dots, e_{tr}$. Then we randomly re-sample segments/blocks of residuals, and join them together to construct new simulated residual series. If the residual series is a non-seasonal time series, we use the Autocorrelation Function (ACF) to determine the size of a block. For example, if the $i^{th}$ lag of ACF is significant, we take the block size to be $i$, as this will ensure that we capture any important autocorrelation structures in the series. If the residual series is seasonal, we consider *single season block bootstrap* [@HF2010; @Politis2001 (missing reference)], where the length of each block is taken to be a multiple of the length of the seasonal period of the series. 
+Once the forecasting model given in @eq-estmodel is estimated, we obtain the series of in-sample residuals $e_{1}, \dots, e_{tr}$. Then we randomly re-sample segments/blocks of residuals, and join them together to construct new simulated residual series. If the residual series is identified as a non-seasonal time series, we use the Autocorrelation Function (ACF) to determine the size of a block. For example, if the $i^{th}$ lag of ACF is significant, we take the block size to be $i$, as this will ensure that we capture any important autocorrelation structures in the residual series. If the residual series is seasonal, we consider the *single season block bootstrap* method [@HF2010; @Politis2001 (missing reference)], where the length of each block is taken to be a multiple of the seasonal period of the series. 
 
-To test the coverage of the derived prediction intervals, we calculate the average coverage of multiple prediction intervals constructed over a time series cross-validation forecasting procedure as proposed by @Wang2024 (cite paper by Xiaoqian and Rob later). 
+To test the coverage of the derived prediction intervals, we calculate the average coverage of multiple prediction intervals constructed under a generic online learning framework as proposed by @Wang2024. 
 
 The complete workflow undertaken for obtaining prediction intervals through block bootstrapping for the test set is outlined as follows.
 
 #### Block Bootstrapping with Time Series Cross-validation Forecasting
 
-1. Sequentially split the data into non-overlapping training set ($z_{1}, \dots, z_{tr}$), calibration set ($z_{tr + 1}, \dots, z_{tc}$), and test set ($z_{tc + 1}, \dots, z_{T}$).
+1. Sequentially split the data into non-overlapping training set ($\bm{z}_{1}, \dots, \bm{z}_{tr}$), calibration set ($\bm{z}_{tr + 1}, \dots, \bm{z}_{tc}$), and test set ($\bm{z}_{tc + 1}, \dots, \bm{z}_{T}$).
 
 2. Perform cross-validation forecasting. Start by estimating the forecasting model on the training set, and then iteratively roll the training window forward by one observation, while repeating the model estimation until the window starting point reaching the time point $tc - H + 1$, where $H$ is the desired forecast horizon. 
 
@@ -93,11 +93,11 @@ The complete workflow undertaken for obtaining prediction intervals through bloc
 
 ### Prediction Intervals through Conformal Prediction {#sec-cpflow2}
 
-Here we use the conformal prediction methods for computing prediction intervals with time series cross-validation forecasting proposed by @Wang2024 (cite paper by Xiaoqian and Rob later). The workflow can be summarised as follows.
+Here we use the conformal prediction methods for computing prediction intervals with time series cross-validation forecasting proposed by @Wang2024. The workflow can be summarised as follows.
 
 #### Conformal Prediction with Time Series Cross-validation Forecasting
 
-1. Sequentially split the data into non-overlapping training set ($z_{1}, \dots, z_{tr}$), calibration set ($z_{tr + 1}, \dots, z_{tc}$), and test set ($z_{tc + 1}, \dots, z_{T}$) as in block bootstrapping. 
+1. Sequentially split the data into non-overlapping training set ($\bm{z}_{1}, \dots, \bm{z}_{tr}$), calibration set ($\bm{z}_{tr + 1}, \dots, \bm{z}_{tc}$), and test set ($\bm{z}_{tc + 1}, \dots, \bm{z}_{T}$) as in block bootstrapping. 
 
 2. Perform cross-validation forecasting. Start by estimating the forecasting model on the training set, and then iteratively roll the training window forward by one observation, while repeating the model estimation until we reach the time point $tc - H + 1$, where $H$ is the forecasting horizon of interest. 
 
@@ -115,7 +115,7 @@ Therefore, we propose ***Conformal Block Bootstrapping***, which is a natural co
 
 #### Conformal Block Bootstrapping with Time Series Cross-validation Forecasting
 
-1. Sequentially split the data into non-overlapping training set ($z_{1}, \dots, z_{tr}$), calibration set ($z_{tr + 1}, \dots, z_{tc}$), and test set ($z_{tc + 1}, \dots, z_{T}$) as in previous methods. 
+1. Sequentially split the data into non-overlapping training set ($\bm{z}_{1}, \dots, \bm{z}_{tr}$), calibration set ($\bm{z}_{tr + 1}, \dots, \bm{z}_{tc}$), and test set ($\bm{z}_{tc + 1}, \dots, \bm{z}_{T}$) as in previous methods. 
 
 2. Perform cross-validation forecasting. Start by estimating the forecasting model on the training set, and then iteratively roll the training window forward by one observation, while repeating the model estimation until we reach the time point $tc - H + 1$, where $H$ is the forecasting horizon of interest. 
 
