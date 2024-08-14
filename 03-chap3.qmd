@@ -1,4 +1,4 @@
-# Estimating Uncertainty of High-dimensional Nonparametric Forecasts: A Prediction Interval Approach {#sec-PI}
+# Estimating Uncertainty of High-dimensional Nonparametric Forecasts {#sec-PI}
 
 
 ```{r}
@@ -72,24 +72,28 @@ The complete workflow undertaken for obtaining prediction intervals through bloc
 
 #### Block Bootstrapping with Time Series Cross-validation Forecasting
 
-1. Sequentially split the data into non-overlapping training set ($\bm{z}_{1}, \dots, \bm{z}_{tr}$), calibration set ($\bm{z}_{tr + 1}, \dots, \bm{z}_{tc}$), and test set ($\bm{z}_{tc + 1}, \dots, \bm{z}_{T}$).
+[XW: Is the calibration set necessary here? My understanding is that we only use in-sample residuals for the block bootstrap method. Therefore, only the training set (which includes both the initial training set $\{\bm{z}_{1}, \dots, \bm{z}_{tr}\}$ and the calibration set $\{\bm{z}_{tr + 1}, \dots, \bm{z}_{tc}\}$) and the test set are required. I have totally rewritten the procedure below, let me know if you disagree with it.]{style="color:red;"}
 
-2. Perform cross-validation forecasting. Start by estimating the forecasting model on the training set, and then iteratively roll the training window forward by one observation, while repeating the model estimation until the window starting point reaching the time point $tc - H + 1$, where $H$ is the desired forecast horizon. 
+1. Sequentially split the data into non-overlapping training set $\{\bm{z}_{1}, \dots, \bm{z}_{tc}\}$ and test set $\{\bm{z}_{tc + 1}, \dots, \bm{z}_{T}\}$.
 
-3. In each rolling training window, obtain the series of *in-sample* residuals ($(e_{1}, \dots, e_{tr}), \\ (e_{2}, \dots, e_{tr + 1}), \dots, (e_{tc - H + 1}, \dots, e_{tc})$). 
+2. Train a forecasting model on the the training set.
 
-4. In each rolling training window, perform block bootstrapping by randomly re-sampling blocks of a selected length from the residuals series, and generate several bootstrapped series of residuals. 
+3. Obtain the series of in-sample residuals $\{(e_{1}, \dots, e_{tr})$.
 
-5. Obtain H-step-ahead forecasts on each corresponding rolling calibration set.
-  -   ***If no response lags were used as predictors to the forecasting model:*** add bootstrapped residuals of corresponding horizons to the forecasts obtained to derive simulated future sample paths. That is, the first element of each bootstrapped series is added to 1-step-ahead forecast, the second element of each bootstrapped series is added to 2-step-ahead forecast, and so on, to obtain several future sample paths. 
+4. Perform block bootstrapping by randomly re-sampling blocks of a selected length from the residuals series, and generate several bootstrapped series of residuals.
+
+5. Obtain $H$-step-ahead simulated future values, $\hat{y}_{tc + 1 \mid tc}, \dots, \hat{y}_{tc + H \mid tc}$, for each bootstrapped series.
+  -   ***If no response lags were used as predictors to the forecasting model:*** add bootstrapped residuals to the forecasts obtained to derive simulated future sample paths.
   
   -   ***If response lags were used as predictors to the forecasting model:*** perform recursive forecasting. 
-      i. Obtain 1-step-ahead forecast.
-      ii. Add first elements of each bootstrapped series to 1-step-ahead forecast to obtain 1-step-ahead simulated future values.
-      iii. Use constructed 1-step-ahead simulated future values as appropriate lagged predictors for the next observation, and obtain 2-step-ahead forecast.
-      iv. Repeat steps i-ii iteratively until desired forecasting horizon $H$ is reached. 
+      i. Obtain $1$-step-ahead forecast.
+      ii. Add the first element of each bootstrapped series to $1$-step-ahead forecast to obtain $1$-step-ahead simulated future values.
+      iii. Use constructed $1$-step-ahead simulated future values as appropriate lagged predictors for the next observation, and obtain $2$-step-ahead forecast.
+      iv. Repeat steps i-ii iteratively until desired forecasting horizon $H$ is reached.
 
-6. Calculate required quantiles of the sets of simulated future values at each forecast horizon to construct prediction intervals of desired nominal coverage. 
+6. Calculate required quantiles of the sets of simulated future values at each forecast horizon to construct prediction intervals.
+
+7. Recursively roll the training set forward by one observation, and then repeat steps 2-6 until prediction intervals have been constructed for the entire test set.
 
 ### Prediction Intervals through Conformal Prediction {#sec-cpflow2}
 
