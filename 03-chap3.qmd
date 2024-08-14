@@ -89,7 +89,7 @@ The complete workflow undertaken for obtaining prediction intervals through bloc
       i. Obtain $1$-step-ahead forecast.
       ii. Add the first element of each bootstrapped series to $1$-step-ahead forecast to obtain $1$-step-ahead simulated future values.
       iii. Use constructed $1$-step-ahead simulated future values as appropriate lagged predictors for the next observation, and obtain $2$-step-ahead forecast.
-      iv. Repeat steps i-ii iteratively until desired forecasting horizon $H$ is reached.
+      iv. Repeat the process iteratively until desired forecasting horizon $H$ is reached.
 
 6. Calculate required quantiles of the sets of simulated future values at each forecast horizon to construct prediction intervals.
 
